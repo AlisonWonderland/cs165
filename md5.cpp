@@ -32,15 +32,20 @@
 // }
 #include <iostream>
 #include "md5lib.h"
+#include <omp.h>
 #include <sstream>
 #include <bitset>
 #include <string.h>
  
 using namespace std;
 
+string convertTo16Bytes(string Alt_sum) {
+    cout << "16 byte version" << endl;
+}
 
 string md5Part1(string password, string salt){
     string Alt_sum = md5(password + salt + password);
+    string Alt_sum_16_bytes = convertTo16Bytes(Alt_sum);
     string intermediate = md5(password + "$1$" + salt + Alt_sum.substr(0, 5) + password[0] + "\0\0"); // last two concats are the bits(3 in total)
     for(int i = 0; i < 1000; ++i){
         string tempString = "";
@@ -160,15 +165,160 @@ string getHash(string finalIntermediate) {
     return rearranged;
 }
 
+void test(string prefix) {
+    // cout << prefix << endl;
+    if(prefix == "zhgnnd") {
+        cout << "SOLVED!!! The solution: " << prefix << endl;
+        // exit(0);
+    }
+    // else {
+    //     while(1) {
+    //         cout << prefix << endl;
+    //     }
+    // }
+    return;
+}
+
+void printAllKLengthParallel(char set[], string prefix, 
+                                    int n, int k) 
+{ 
+      
+    // Base case: k is 0, 
+    // print prefix 
+    if (k == 0) 
+    { 
+        // cout << (prefix) << endl; 
+        test(prefix);
+        return; 
+    } 
+  
+    // One by one add all characters  
+    // from set and recursively  
+    // call for k equals to k-1 
+    // omp_set_num_threads(8);
+    #pragma omp parallel
+    {
+        #pragma omp for
+        for (int i = 0; i < n; i++) 
+            { 
+                string newPrefix; 
+                
+                // Next character of input added 
+                newPrefix = prefix + set[i]; 
+                
+                // k is decreased, because  
+                // we have added a new character 
+                printAllKLengthParallel(set, newPrefix, n, k - 1); 
+        } 
+    }
+
+} 
+
+void printAllKLengthSerial(char set[], string prefix, 
+                                    int n, int k) 
+{ 
+      
+    // Base case: k is 0, 
+    // print prefix 
+    if (k == 0) 
+    { 
+        // cout << (prefix) << endl; 
+        test(prefix);
+        return; 
+    } 
+  
+    // One by one add all characters  
+    // from set and recursively  
+    // call for k equals to k-1 
+    
+    for (int i = 0; i < n; i++) 
+        { 
+            string newPrefix; 
+            
+            // Next character of input added 
+            newPrefix = prefix + set[i]; 
+            
+            // k is decreased, because  
+            // we have added a new character 
+            printAllKLengthSerial(set, newPrefix, n, k - 1); 
+    } 
+
+} 
+  
+void printAllKLength(char set[], int k,int n) 
+{ 
+    double start = omp_get_wtime();
+    double end = 0.0;
+
+    printAllKLengthParallel(set, "", n, 2);
+    end = omp_get_wtime() - start;
+    cout << "Time it took to print out all possible remaining 2 characters left(Parallel): " << end << " seconds" << endl;
+
+    start = omp_get_wtime();
+    printAllKLengthSerial(set, "", n, 2);
+    end = omp_get_wtime() - start;
+    cout << "Time it took to print out all possible remaining 2 characters left(Serial): " << end << " seconds" << endl;
+
+    start = omp_get_wtime();
+    printAllKLengthParallel(set, "", n, 3);
+    end = omp_get_wtime() - start;
+    cout << "Time it took to print out all possible remaining 3 characters left(Parallel): " << end << " seconds" << endl;
+
+    start = omp_get_wtime();
+    printAllKLengthSerial(set, "", n, 3);
+    end = omp_get_wtime() - start;
+    cout << "Time it took to print out all possible remaining 3 characters left(Serial): " << end << " seconds" << endl;
+
+    start = omp_get_wtime();
+    printAllKLengthParallel(set, "", n, 4);
+    end = omp_get_wtime() - start;
+    cout << "Time it took to print out all possible remaining 4 characters left(Parallel): " << end << " seconds" << endl;
+
+    start = omp_get_wtime();
+    printAllKLengthSerial(set, "", n, 4);
+    end = omp_get_wtime() - start;
+    cout << "Time it took to print out all possible remaining 4 characters left(Serial): " << end << " seconds" << endl;
+
+    start = omp_get_wtime();
+    printAllKLengthParallel(set, "", n, 5);
+    end = omp_get_wtime() - start;
+    cout << "Time it took to print out all possible remaining 5 characters left(Parallel): " << end << " seconds" << endl;
+
+    start = omp_get_wtime();
+    printAllKLengthSerial(set, "", n, 5);
+    end = omp_get_wtime() - start;
+    cout << "Time it took to print out all possible remaining 5 characters left(Serial): " << end << " seconds" << endl;
+
+    start = omp_get_wtime();
+    printAllKLengthParallel(set, "", n, 6);
+    end = omp_get_wtime() - start;
+    cout << "Time it took to print out all possible remaining 6 characters left(Parallel): " << end << " seconds" << endl;
+
+    start = omp_get_wtime();
+    printAllKLengthSerial(set, "", n, 6);
+    end = omp_get_wtime() - start;
+    cout << "Time it took to print out all possible remaining 6 characters left(Serial): " << end << " seconds" << endl;
+
+} 
  
-int main(int argc, char *argv[])
+int main()
 {
-    string password = "zhgnnd";
-    string salt = "hfT7jp2q";
-    string finalIntermediate = md5Part1(password, salt);
-    cout << "password: " << password << "\n"
-        << "MD5 finalIntermediate: " << finalIntermediate << '\n'
-        << "Actual hash: " << getHash(finalIntermediate) << endl;
+    char alphabet[26] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
+    // Generate strings here
+    printAllKLength(alphabet, 3, 26);
+
+    // for(int i = 0; i < 6; ++i) {
+    //     for(int j = 0; i < 26; ++i) {
+    //         cout << alphabet[i] << endl;
+    //     }
+    // }
+
+    // string password = "zhgnnd";
+    // string salt = "hfT7jp2q";
+    // string finalIntermediate = md5Part1(password, salt);
+    // cout << "password: " << password << endl;
+    // cout << "MD5 finalIntermediate: " << finalIntermediate << endl;
+    // cout << "Actual hash: " << getHash(finalIntermediate) << endl;
     return 0;
 }
 
